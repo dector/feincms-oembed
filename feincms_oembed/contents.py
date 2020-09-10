@@ -153,3 +153,36 @@ class OembedMixin(models.Model):
 
     def process(self, request, **kwargs):
         self.get_html_from_json()
+
+
+class OembedMixin2(models.Model):
+    """
+    Similar to ``OembedMixin2`` but has ``.oembed`` property to be used in templates.
+    Example:
+        ```
+        {{ object.oembed.html|safe }}
+        ```
+    """
+
+    url = models.URLField(
+        _('Video URL'),
+        help_text=_(
+            'Insert an URL to an external content you want to embed,'
+            ' e.g. http://www.youtube.com/watch?v=Nd-vBFJN_2E'),
+        blank=True,
+    )
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def initialize_type(cls, OEMBED_PARAMS={}):
+        cls._params = OEMBED_PARAMS
+
+    @property
+    def oembed(self):
+        if self.url:
+            try:
+                return CachedLookup.objects.oembed(self.url, **self._params)
+            except TypeError:
+                return _('I don\'t know how to embed %s.') % self.url
